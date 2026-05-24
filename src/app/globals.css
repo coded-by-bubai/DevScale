@@ -1,26 +1,157 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-on-surface-variant: #b9cacb;
+  --color-on-secondary: #313030;
+  --color-on-tertiary-container: #725e00;
+  --color-outline: #849495;
+  --color-on-primary-fixed: #002022;
+  --color-on-tertiary: #3b2f00;
+  --color-surface-tint: #00dbe7;
+  --color-primary-container: #00f2ff;
+  --color-on-surface: #e5e2e1;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-primary: #00696f;
+  --color-on-tertiary-fixed-variant: #554500;
+  --color-primary-fixed: #74f5ff;
+  --color-tertiary-fixed-dim: #e8c423;
+  --color-outline-variant: #3a494b;
+  --color-secondary-container: #474746;
+  --color-on-primary-fixed-variant: #004f54;
+  --color-surface: #131313;
+  --color-on-tertiary-fixed: #221b00;
+  --color-secondary-fixed: #e5e2e1;
+  --color-surface-bright: #3a3939;
+  --color-primary-fixed-dim: #00dbe7;
+  --color-on-error: #690005;
+  --color-surface-variant: #353534;
+  --color-on-primary-container: #006a71;
+  --color-secondary: #c8c6c5;
+  --color-error: #ffb4ab;
+  --color-background: #131313;
+  --color-surface-container-low: #1c1b1b;
+  --color-on-background: #e5e2e1;
+  --color-on-secondary-container: #b7b5b4;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-primary: #e1fdff;
+  --color-surface-container: #201f1f;
+  --color-secondary-fixed-dim: #c8c6c5;
+  --color-on-secondary-fixed: #1c1b1b;
+  --color-inverse-on-surface: #313030;
+  --color-tertiary: #fff6e4;
+  --color-surface-dim: #131313;
+  --color-tertiary-container: #fed83a;
+  --color-tertiary-fixed: #ffe173;
+  --color-on-secondary-fixed-variant: #474746;
+  --color-on-primary: #00363a;
+  --color-surface-container-highest: #353534;
+  --color-on-error-container: #ffdad6;
+  --color-surface-container-high: #2a2a2a;
+  --color-error-container: #93000a;
+
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  --spacing-gutter: 24px;
+  --spacing-section-gap: 80px;
+  --spacing-base: 8px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 40px;
+  --spacing-container-max: 1200px;
+
+  --font-code-block: 'JetBrains Mono', monospace;
+  --font-headline-lg-mobile: 'Geist', sans-serif;
+  --font-headline-lg: 'Geist', sans-serif;
+  --font-headline-xl: 'Geist', sans-serif;
+  --font-body-md: 'Inter', sans-serif;
+  --font-label-sm: 'JetBrains Mono', monospace;
+
+  /* Typographic scale mapping */
+  --text-code-block: 14px;
+  --text-code-block--line-height: 1.7;
+  --text-code-block--font-weight: 450;
+  
+  --text-headline-lg-mobile: 28px;
+  --text-headline-lg-mobile--line-height: 1.2;
+  --text-headline-lg-mobile--letter-spacing: -0.02em;
+  --text-headline-lg-mobile--font-weight: 600;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 1.2;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-xl: 48px;
+  --text-headline-xl--line-height: 1.1;
+  --text-headline-xl--letter-spacing: -0.04em;
+  --text-headline-xl--font-weight: 700;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.6;
+  --text-body-md--letter-spacing: 0em;
+  --text-body-md--font-weight: 400;
+
+  --text-label-sm: 12px;
+  --text-label-sm--line-height: 1;
+  --text-label-sm--letter-spacing: 0.05em;
+  --text-label-sm--font-weight: 500;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-background text-on-background antialiased min-h-screen flex flex-col;
+    font-family: var(--font-body-md);
+    font-size: var(--text-body-md);
+    line-height: var(--text-body-md--line-height);
+    font-weight: var(--text-body-md--font-weight);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .glass-panel {
+    background: rgba(19, 19, 19, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .glass-nav {
+    background: rgba(19, 19, 19, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .neon-glow:hover {
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+    border-color: rgba(0, 242, 255, 0.5);
+  }
+  .card-gradient {
+    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .font-headline-xl { font-family: var(--font-headline-xl); font-weight: var(--text-headline-xl--font-weight); }
+  .text-headline-xl { font-size: var(--text-headline-xl); line-height: var(--text-headline-xl--line-height); letter-spacing: var(--text-headline-xl--letter-spacing); }
+  
+  .font-headline-lg { font-family: var(--font-headline-lg); font-weight: var(--text-headline-lg--font-weight); }
+  .text-headline-lg { font-size: var(--text-headline-lg); line-height: var(--text-headline-lg--line-height); letter-spacing: var(--text-headline-lg--letter-spacing); }
+  
+  .font-headline-lg-mobile { font-family: var(--font-headline-lg-mobile); font-weight: var(--text-headline-lg-mobile--font-weight); }
+  .text-headline-lg-mobile { font-size: var(--text-headline-lg-mobile); line-height: var(--text-headline-lg-mobile--line-height); letter-spacing: var(--text-headline-lg-mobile--letter-spacing); }
+
+  .font-body-md { font-family: var(--font-body-md); font-weight: var(--text-body-md--font-weight); }
+  .text-body-md { font-size: var(--text-body-md); line-height: var(--text-body-md--line-height); letter-spacing: var(--text-body-md--letter-spacing); }
+
+  .font-label-sm { font-family: var(--font-label-sm); font-weight: var(--text-label-sm--font-weight); }
+  .text-label-sm { font-size: var(--text-label-sm); line-height: var(--text-label-sm--line-height); letter-spacing: var(--text-label-sm--letter-spacing); }
+
+  .font-code-block { font-family: var(--font-code-block); font-weight: var(--text-code-block--font-weight); }
+  .text-code-block { font-size: var(--text-code-block); line-height: var(--text-code-block--line-height); }
 }
