@@ -154,4 +154,53 @@
 
   .font-code-block { font-family: var(--font-code-block); font-weight: var(--text-code-block--font-weight); }
   .text-code-block { font-size: var(--text-code-block); line-height: var(--text-code-block--line-height); }
+
+  /* Mobile menu toggle transition */
+  label[for="mobile-menu-toggle"] .close-icon {
+    display: none !important;
+  }
+  #mobile-menu-toggle:checked ~ div label[for="mobile-menu-toggle"] .menu-icon {
+    display: none !important;
+  }
+  #mobile-menu-toggle:checked ~ div label[for="mobile-menu-toggle"] .close-icon {
+    display: block !important;
+  }
+
+  /* Code blocks responsive scrolling and styles */
+  pre {
+    overflow-x: auto !important;
+    white-space: pre !important;
+    word-wrap: normal !important;
+    max-width: 100% !important;
+    padding: 1.25rem !important;
+    border-radius: 0.75rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(20, 20, 20, 0.75) !important;
+  }
+  code {
+    font-family: var(--font-code-block) !important;
+    font-size: 0.9em !important;
+  }
+  :not(pre) > code {
+    background: rgba(255, 255, 255, 0.08) !important;
+    padding: 0.2rem 0.4rem !important;
+    border-radius: 0.25rem !important;
+    color: var(--color-primary-fixed-dim) !important;
+  }
+
+  /* Share Toast animation */
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  .animate-slide-in-up {
+    animation: slide-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
 }
+

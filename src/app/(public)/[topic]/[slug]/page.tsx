@@ -106,7 +106,7 @@ export default async function ArticlePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {article.coverImage && (
-        <div className="relative w-full h-[300px] md:h-[450px] mb-12 rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-low shadow-lg">
+        <div className="relative w-full aspect-video md:aspect-[21/9] mb-12 rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-low shadow-lg">
           <Image
             src={article.coverImage}
             alt={article.title}

@@ -69,14 +69,14 @@ export default function LoadMoreArticles({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in">
           {articles.map((article) => (
             <Link key={article.id} href={`/${article.tags[0]?.slug || "uncategorized"}/${article.slug}`}>
-              <article className="glass-panel border border-outline-variant/30 rounded-lg p-6 flex flex-col h-[280px] card-gradient hover:-translate-y-1 transition-transform duration-300 neon-glow cursor-pointer group">
+              <article className="glass-panel border border-outline-variant/30 rounded-lg p-6 flex flex-col min-h-[280px] h-auto card-gradient hover:-translate-y-1 transition-transform duration-300 neon-glow cursor-pointer group">
                 <div className="flex justify-between items-start mb-4">
                   {article.tags && article.tags[0] && (
                     <span className="inline-flex px-2 py-0.5 border border-primary-fixed/50 text-primary-fixed font-label-sm text-label-sm rounded uppercase tracking-wider text-[10px]">
                       {article.tags[0].name}
                     </span>
                   )}
-                  <span className="text-on-surface-variant font-code-block text-code-block text-xs">
+                  <span className="text-on-surface-variant font-code-block text-code-block text-xs" suppressHydrationWarning>
                     {new Date(article.createdAt).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",

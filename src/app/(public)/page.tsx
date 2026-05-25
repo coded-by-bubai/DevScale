@@ -36,10 +36,10 @@ export default async function Home() {
   return (
     <>
       <section className="py-12 md:py-20 flex flex-col items-center text-center">
-        <h1 className="font-headline-xl text-headline-xl text-on-surface mb-6 max-w-3xl">
+        <h1 className="font-headline-xl text-3xl sm:text-4xl md:text-5xl lg:text-headline-xl text-on-surface mb-6 max-w-3xl leading-tight sm:leading-none">
           Master Software Engineering
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mb-10">
+        <p className="font-body-md text-sm sm:text-base md:text-body-md text-on-surface-variant max-w-2xl mb-10">
           Deep dives into Data Structures, Algorithms, and System Design. Elevate your technical craft with premium editorial content built for high-performance developers.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
@@ -56,17 +56,17 @@ export default async function Home() {
         <section className="mb-section-gap">
           <Link href={`/${featuredArticle.tags[0]?.slug || 'uncategorized'}/${featuredArticle.slug}`}>
             <div className="glass-panel rounded-xl overflow-hidden group cursor-pointer border border-outline-variant/30 hover:border-primary-fixed/50 transition-all duration-300 relative">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-full">
-                <div className="h-64 lg:h-auto w-full bg-surface-container-high relative overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
+                <div className="h-64 md:h-auto w-full bg-surface-container-high relative overflow-hidden">
                   <Image 
                     alt={featuredArticle.title} 
                     className="object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" 
                     src={featuredArticle.coverImage || "https://lh3.googleusercontent.com/aida-public/AB6AXuDFgrwq4YaE6KtuRexP4D0hM_6zcnvlk1T0QeNCU1UzM05QsAa-bDjK0qhqid2x3692lqfaMy8a6tKI4CmrXTd3-82jH-D-wZwWNB1xZ7QiNyW8yON9JEgIwgsFK2hrGJ05fH03QxHsRRcdbgECAx3-h7mVsyPqz8iEc1SycajZfuKZZyQS3B4JNTy-rmuk8kSZhrrIV4eNiOkL58jg9tfjRWomF6iotFqHBtGklOsIcAYGXHnus-JI-hoUUZfYadKKM5KCvK7nzO9C"}
                     fill
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent lg:from-transparent lg:to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent md:from-transparent md:to-transparent"></div>
                 </div>
-                <div className="p-8 md:p-12 flex flex-col justify-center card-gradient relative z-10">
+                <div className="p-6 md:p-12 flex flex-col justify-center card-gradient relative z-10">
                   <div className="flex items-center gap-3 mb-4">
                     {featuredArticle.tags && featuredArticle.tags[0] && (
                       <span className="inline-flex items-center justify-center px-2 py-1 border border-primary-fixed bg-primary-fixed/10 text-primary-fixed font-label-sm text-label-sm rounded uppercase tracking-wider">
@@ -112,7 +112,7 @@ export default async function Home() {
           <div className="flex overflow-x-auto gap-6 pb-6 hide-scrollbar snap-x">
             {recentArticles.map(article => (
               <Link key={article.id} href={`/${article.tags[0]?.slug || 'uncategorized'}/${article.slug}`}>
-                <article className="glass-panel border border-outline-variant/30 rounded-lg p-6 min-w-[300px] w-[300px] md:min-w-[350px] md:w-[350px] flex flex-col h-[280px] card-gradient hover:-translate-y-1 transition-transform duration-300 neon-glow cursor-pointer snap-start group">
+                <article className="glass-panel border border-outline-variant/30 rounded-lg p-6 min-w-[270px] w-[270px] sm:min-w-[320px] sm:w-[320px] md:min-w-[350px] md:w-[350px] flex flex-col min-h-[280px] h-auto card-gradient hover:-translate-y-1 transition-transform duration-300 neon-glow cursor-pointer snap-start group">
                   <div className="flex justify-between items-start mb-4">
                     {article.tags && article.tags[0] && (
                       <span className="inline-flex px-2 py-0.5 border border-primary-fixed/50 text-primary-fixed font-label-sm text-label-sm rounded uppercase tracking-wider text-[10px]">

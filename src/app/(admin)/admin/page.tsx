@@ -7,6 +7,7 @@ import Link from "next/link"
 import Image from "next/image"
 import Markdown from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
+import { convertGoogleDriveLink } from "@/lib/utils"
 import 'highlight.js/styles/github-dark.css'
 
 function AdminWriteArticleContent() {
@@ -19,8 +20,6 @@ function AdminWriteArticleContent() {
   const [showCustomTagInput, setShowCustomTagInput] = useState(false)
   const [previewMode, setPreviewMode] = useState<"edit" | "preview">("edit")
   const [loading, setLoading] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -93,35 +92,7 @@ function AdminWriteArticleContent() {
     }, 0)
   }
 
-  // Handle Cover Image Upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
 
-    setUploadingImage(true)
-    const formData = new FormData()
-    formData.append("file", file)
-
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) throw new Error("Upload failed")
-
-      const data = await response.json()
-      setCoverImage(data.url)
-    } catch (error) {
-      alert("Failed to upload image")
-      console.error(error)
-    } finally {
-      setUploadingImage(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    }
-  }
 
   // Submit and Publish/Update Article
   const handlePublish = async () => {
@@ -241,9 +212,10 @@ function AdminWriteArticleContent() {
       <nav className="fixed top-0 w-full z-50 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm transition-all duration-300">
         <div className="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
           <div className="flex items-center gap-4">
-            <Link className="font-headline-lg text-headline-lg font-bold tracking-tighter text-primary-fixed dark:text-primary-fixed-dim hover:backdrop-brightness-125 transition-all duration-300 scale-95 active:scale-90 flex items-center gap-2" href="/">
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>edit_square</span>
-              ArchAlgo Admin
+            <Link className="font-headline-lg text-headline-lg font-bold tracking-tighter text-primary-fixed dark:text-primary-fixed-dim hover:backdrop-brightness-125 transition-all duration-300 scale-95 active:scale-90 flex items-center gap-1.5" href="/">
+              <span className="material-symbols-outlined text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>edit_square</span>
+              <span className="hidden sm:inline">ArchAlgo Admin</span>
+              <span className="sm:hidden text-base">Admin</span>
             </Link>
           </div>
           <div className="hidden md:flex items-center gap-6">
@@ -252,15 +224,19 @@ function AdminWriteArticleContent() {
             </span>
             <Link className="font-label-sm text-label-sm text-on-surface-variant dark:text-on-surface-variant hover:text-primary-fixed transition-colors" href="/admin/dashboard">Dashboard</Link>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary-fixed transition-colors flex items-center gap-1 scale-95 active:scale-90">
+          <div className="flex items-center gap-3 md:gap-4">
+            <Link href="/admin/dashboard" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary-fixed transition-colors flex items-center gap-1 scale-95 active:scale-90 md:hidden" title="Dashboard">
+              <span className="material-symbols-outlined text-[18px]">dashboard</span>
+              <span className="hidden xs:inline">Dashboard</span>
+            </Link>
+            <Link href="/" className="font-label-sm text-label-sm text-on-surface-variant hover:text-primary-fixed transition-colors flex items-center gap-1 scale-95 active:scale-90" title="Exit">
               <span className="material-symbols-outlined text-[18px]">close</span>
-              Exit
+              <span className="hidden xs:inline">Exit</span>
             </Link>
             <button
               onClick={handlePublish}
               disabled={loading}
-              className="font-label-sm text-label-sm bg-primary-container text-on-primary-fixed px-5 py-1.5 rounded-DEFAULT font-bold hover:bg-surface-tint transition-colors scale-95 active:scale-90 disabled:opacity-50 cursor-pointer"
+              className="font-label-sm text-label-sm bg-primary-container text-on-primary-fixed px-3 py-1.5 rounded-DEFAULT font-bold hover:bg-surface-tint transition-colors scale-95 active:scale-90 disabled:opacity-50 cursor-pointer text-xs"
             >
               {loading ? "Saving..." : (editingArticleId ? "Save Changes" : "Publish")}
             </button>
@@ -273,12 +249,13 @@ function AdminWriteArticleContent() {
         <header className="mb-12 space-y-8 animate-fade-in mt-6">
           {/* Cover Image URL zone */}
           {coverImage ? (
-            <div className="relative group w-full h-48 rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-low shadow-sm">
+            <div className="relative group w-full aspect-video md:aspect-[21/9] rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-low shadow-sm">
               <Image
                 src={coverImage}
                 alt="Cover Preview"
                 fill
                 className="object-cover opacity-80"
+                priority
               />
               <button
                 onClick={() => setCoverImage("")}
@@ -288,23 +265,19 @@ function AdminWriteArticleContent() {
               </button>
             </div>
           ) : (
-            <div
-              className="relative group w-full rounded-xl border border-dashed border-outline-variant/50 hover:border-primary-fixed bg-surface-container-low/40 p-6 flex flex-col items-center justify-center transition-all duration-300 cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <span className="material-symbols-outlined text-3xl text-on-surface-variant mb-2 group-hover:text-primary-fixed transition-colors">
-                {uploadingImage ? "hourglass_empty" : "add_photo_alternate"}
-              </span>
-              <p className="bg-transparent border-none text-center font-label-sm text-xs text-on-surface-variant group-hover:text-primary-fixed outline-none w-full max-w-md">
-                {uploadingImage ? "Uploading..." : "Click to upload Cover Image"}
-              </p>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                accept="image/*"
-                className="hidden"
-              />
+            <div className="space-y-2 p-6 rounded-xl border border-outline-variant/30 bg-surface-container-low/30 animate-fade-in">
+              <label className="text-[10px] text-on-surface-variant font-label-sm uppercase tracking-wider pl-1 font-bold">Cover Image URL (Optional)</label>
+              <div className="relative flex items-center">
+                <span className="material-symbols-outlined absolute left-3 text-on-surface-variant text-sm">link</span>
+                <input
+                  type="url"
+                  placeholder="Paste cover photo URL (e.g. Unsplash, GitHub link, or Google Drive sharing link)..."
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(convertGoogleDriveLink(e.target.value))}
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl pl-10 pr-4 py-3 text-sm text-on-surface focus:outline-none focus:border-primary-fixed focus:ring-1 focus:ring-primary-fixed transition-all placeholder:text-outline-variant"
+                />
+              </div>
+              <p className="text-[10px] text-on-surface-variant opacity-75 pl-1">Provide any direct image link or Google Drive share link. Google Drive links promote automatically.</p>
             </div>
           )}
 
@@ -384,9 +357,9 @@ function AdminWriteArticleContent() {
         {/* Editor Workspace Component */}
         <div className="glass-panel rounded-xl flex flex-col min-h-[500px] mb-12 shadow-sm border border-outline-variant/30 overflow-hidden">
           {/* Editor Header / Toolbars */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant/30 bg-surface-container-low/30">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-outline-variant/30 bg-surface-container-low/30">
             {/* Toolbar Insertion Helpers */}
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
                 onClick={() => insertMarkdown("**", "**")}

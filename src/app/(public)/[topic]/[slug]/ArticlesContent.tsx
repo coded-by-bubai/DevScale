@@ -95,8 +95,17 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
   // Handle Share URL Copy
   const handleShare = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href)
-      alert("Article link copied to clipboard!")
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: article.title,
+          text: 'Check out this article on ArchAlgo!',
+          url: url
+        });
+      } else {
+        navigator.clipboard.writeText(url);
+        alert('Link copied to clipboard!');
+      }
     }
   }
 
@@ -241,7 +250,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
             <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>
               favorite
             </span>
-            <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-surface-container-low px-2 py-0.5 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-label-sm border border-outline-variant/30">
+            <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-surface-container-low px-2 py-0.5 rounded text-[10px] md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity font-label-sm border border-outline-variant/30">
               {likeCount}
             </span>
           </button>
@@ -268,6 +277,44 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
         </div>
       </aside>
 
+      {/* Mobile Floating Action Bar (Fixed at bottom center on mobile/tablet) */}
+      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-panel rounded-full px-6 py-2.5 border border-outline-variant/30 flex gap-6 items-center shadow-2xl bg-surface/90 backdrop-blur-md animate-fade-in">
+        <button
+          aria-label="Like"
+          onClick={handleLike}
+          className={`transition-colors p-2 flex items-center gap-1.5 ${liked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
+        >
+          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>
+            favorite
+          </span>
+          <span className="text-xs font-bold font-label-sm">{likeCount}</span>
+        </button>
+
+        <div className="w-px h-6 bg-outline-variant/30"></div>
+
+        <button
+          aria-label="Bookmark"
+          onClick={handleBookmark}
+          className={`transition-colors p-2 flex items-center ${bookmarked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
+        >
+          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: bookmarked ? "'FILL' 1" : undefined }}>
+            bookmark
+          </span>
+        </button>
+
+        <div className="w-px h-6 bg-outline-variant/30"></div>
+
+        <button
+          aria-label="Share"
+          onClick={handleShare}
+          className="transition-colors p-2 text-on-surface-variant hover:text-primary-fixed flex items-center"
+        >
+          <span className="material-symbols-outlined text-2xl">
+            share
+          </span>
+        </button>
+      </div>
+
       {/* Main Column */}
       <div className="col-span-1 lg:col-span-8 max-w-[65ch] mx-auto w-full">
         {/* Header Section */}
@@ -283,7 +330,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
             </span>
           </div>
 
-          <h1 className="font-headline-xl text-headline-xl text-on-surface mb-6 leading-tight">
+          <h1 className="font-headline-xl text-3xl sm:text-4xl md:text-5xl lg:text-headline-xl text-on-surface mb-6 leading-tight">
             {article.title}
           </h1>
 
@@ -299,7 +346,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
             )}
             <div>
               <div className="font-medium text-on-surface font-body-md">{article.author.name || "Anonymous"}</div>
-              <div className="text-on-surface-variant text-sm font-body-md">
+              <div className="text-on-surface-variant text-sm font-body-md" suppressHydrationWarning>
                 Published {new Date(article.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} • {article.views} views
               </div>
             </div>
@@ -334,6 +381,24 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
             </button>
           </div>
         </div>
+
+        {/* Related Articles for Mobile/Tablet */}
+        {relatedArticles && relatedArticles.length > 0 && (
+          <div className="block lg:hidden mt-12 p-6 glass-panel border border-outline-variant/30 rounded-xl">
+            <h4 className="font-label-sm text-label-sm text-on-surface mb-4 uppercase tracking-wider">
+              Related Articles
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {relatedArticles.map((rel) => (
+                <Link key={rel.id} href={`/${rel.tags[0]?.slug || "uncategorized"}/${rel.slug}`} className="p-4 bg-surface-container-low hover:bg-surface-container border border-outline-variant/20 rounded-lg group transition-colors block">
+                  <span className="text-xs text-on-surface-variant group-hover:text-primary-fixed transition-colors font-medium line-clamp-2 leading-relaxed">
+                    {rel.title}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Discussion Board / Comments Section */}
         <section className="mt-16 pt-12 border-t border-outline-variant/20">
@@ -417,7 +482,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                         className="rounded-full border border-outline-variant/40 object-cover w-10 h-10 flex-shrink-0"
                       />
                     )}
-                    <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg p-5">
+                    <div className="flex-1 bg-surface-container-low border border-outline-variant/30 rounded-lg p-4 md:p-5">
                       <div className="flex justify-between items-center mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-on-surface text-sm">{comment.author.name || "Anonymous"}</span>
@@ -427,7 +492,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-on-surface-variant">
+                        <span className="text-xs text-on-surface-variant" suppressHydrationWarning>
                           {new Date(comment.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>

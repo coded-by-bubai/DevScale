@@ -4,6 +4,7 @@ import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { db } from "@/lib/db"
+import { verifyPassword } from "@/lib/utils"
 
 declare module "next-auth" {
   interface Session {
@@ -21,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     GitHub,
     Google,
     Credentials({
-      name: "Development Bypass",
+      name: "ArchAlgo Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
@@ -29,12 +30,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email) return null;
         const emailStr = credentials.email as string
+        const passwordStr = (credentials.password as string) || ""
 
         const user = await db.user.findUnique({
           where: { email: emailStr }
         });
 
         if (user) {
+          if (user.password) {
+            const isValid = verifyPassword(passwordStr, user.password)
+            if (!isValid) return null;
+          }
           return {
             id: user.id,
             name: user.name,

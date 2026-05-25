@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { z } from "zod"
 import { auth } from "@/auth"
 import { revalidatePath } from "next/cache"
+import { convertGoogleDriveLink, hashPassword } from "@/lib/utils"
 
 const articleSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters long"),
@@ -214,3 +215,159 @@ export async function deleteArticle(id: string) {
     throw new Error("Failed to delete article.")
   }
 }
+
+export async function getAllUsers() {
+  const session = await auth()
+  
+  if (!session || session.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized: Only admins can retrieve user directory.")
+  }
+
+  try {
+    const users = await db.user.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        image: true,
+      },
+    })
+    return users
+  } catch (error) {
+    console.error("Error fetching all users:", error)
+    return []
+  }
+}
+
+export async function toggleUserRole(targetUserId: string, newRole: string) {
+  const session = await auth()
+  
+  if (!session || session.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized: Only admins can manage roles.")
+  }
+
+  if (session.user?.id === targetUserId) {
+    throw new Error("Security Guard: You cannot demote or modify your own role to prevent self-lockout.")
+  }
+
+  try {
+    const updatedUser = await db.user.update({
+      where: { id: targetUserId },
+      data: { role: newRole },
+    })
+    revalidatePath("/", "layout")
+    return { success: true, role: updatedUser.role }
+  } catch (error) {
+    console.error("Error toggling user role:", error)
+    throw new Error("Failed to update user role.")
+  }
+}
+
+export async function deleteUser(targetUserId: string) {
+  const session = await auth()
+  
+  if (!session || session.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized: Only admins can delete users.")
+  }
+
+  if (session.user?.id === targetUserId) {
+    throw new Error("Security Guard: You cannot delete your own account to prevent self-lockout.")
+  }
+
+  try {
+    await db.user.delete({
+      where: { id: targetUserId },
+    })
+    revalidatePath("/", "layout")
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting user:", error)
+    throw new Error("Failed to delete user account.")
+  }
+}
+
+export async function createNewAdmin(name: string, email: string, image?: string, password?: string) {
+  const session = await auth()
+  
+  if (!session || session.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized: Only admins can register new administrators.")
+  }
+
+  const emailClean = email.trim().toLowerCase()
+  if (!emailClean) {
+    throw new Error("Invalid Input: Email address is required.")
+  }
+
+  const convertedImage = image ? convertGoogleDriveLink(image) : undefined
+  const hashedPassword = password ? hashPassword(password) : undefined
+
+  try {
+    const existingUser = await db.user.findUnique({
+      where: { email: emailClean },
+    })
+
+    if (existingUser) {
+      if (existingUser.role === "ADMIN") {
+        throw new Error("Conflict: A user with this email is already an Administrator.")
+      }
+      const promotedUser = await db.user.update({
+        where: { email: emailClean },
+        data: { 
+          role: "ADMIN",
+          name: name.trim() || existingUser.name,
+          image: convertedImage || existingUser.image,
+          password: hashedPassword || undefined,
+        },
+      })
+      revalidatePath("/", "layout")
+      return promotedUser
+    }
+
+    const newUser = await db.user.create({
+      data: {
+        name: name.trim() || "New Admin",
+        email: emailClean,
+        role: "ADMIN",
+        image: convertedImage || null,
+        password: hashedPassword || null,
+      },
+    })
+    revalidatePath("/", "layout")
+    return newUser
+  } catch (error: any) {
+    console.error("Error creating new admin:", error)
+    throw new Error(error.message || "Failed to create new administrator.")
+  }
+}
+
+export async function changeOwnPassword(newPassword: string) {
+  const session = await auth()
+  
+  if (!session || !session.user?.id) {
+    throw new Error("Unauthorized: You must be signed in to change your password.")
+  }
+
+  const userId = session.user.id
+  const newPasswordClean = newPassword.trim()
+  if (!newPasswordClean) {
+    throw new Error("Invalid Input: Password cannot be blank.")
+  }
+
+  const hashedPassword = hashPassword(newPasswordClean)
+
+  try {
+    await db.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    })
+    return { success: true }
+  } catch (error) {
+    console.error("Error changing password:", error)
+    throw new Error("Failed to update password.")
+  }
+}
+
+
+
