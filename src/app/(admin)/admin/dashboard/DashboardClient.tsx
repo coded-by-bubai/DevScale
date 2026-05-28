@@ -39,6 +39,13 @@ export default function DashboardClient({
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
+  // Action level individual pending states
+  const [deletingArticleId, setDeletingArticleId] = useState<string | null>(null)
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null)
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null)
+  const [isSubmittingAdmin, setIsSubmittingAdmin] = useState(false)
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
+
   // Form states for creating new admin
   const [isAddingAdmin, setIsAddingAdmin] = useState(false)
   const [newAdminName, setNewAdminName] = useState("")
@@ -62,6 +69,7 @@ export default function DashboardClient({
   const handleDeleteArticle = (id: string) => {
     if (!confirm("Are you sure you want to delete this article? This action cannot be undone.")) return
 
+    setDeletingArticleId(id)
     startTransition(async () => {
       try {
         await deleteArticle(id)
@@ -69,6 +77,8 @@ export default function DashboardClient({
         router.refresh()
       } catch {
         alert("Failed to delete article.")
+      } finally {
+        setDeletingArticleId(null)
       }
     })
   }
@@ -79,6 +89,7 @@ export default function DashboardClient({
     
     if (!confirm(`Are you sure you want to ${actionName}?`)) return
 
+    setTogglingUserId(userId)
     startTransition(async () => {
       try {
         await toggleUserRole(userId, newRole)
@@ -86,6 +97,8 @@ export default function DashboardClient({
         router.refresh()
       } catch (err: any) {
         alert(err.message || "Failed to toggle user role.")
+      } finally {
+        setTogglingUserId(null)
       }
     })
   }
@@ -93,6 +106,7 @@ export default function DashboardClient({
   const handleDeleteUser = (userId: string, userName: string) => {
     if (!confirm(`Are you sure you want to permanently delete the user account "${userName}"? This will delete all their comments and data, and cannot be undone.`)) return
 
+    setDeletingUserId(userId)
     startTransition(async () => {
       try {
         await deleteUserAction(userId)
@@ -100,6 +114,8 @@ export default function DashboardClient({
         router.refresh()
       } catch (err: any) {
         alert(err.message || "Failed to delete user account.")
+      } finally {
+        setDeletingUserId(null)
       }
     })
   }
@@ -117,6 +133,7 @@ export default function DashboardClient({
       return
     }
 
+    setIsSubmittingAdmin(true)
     startTransition(async () => {
       try {
         const newUser = await createNewAdmin(newAdminName, newAdminEmail, newAdminImage.trim() || undefined, newAdminPassword)
@@ -135,6 +152,8 @@ export default function DashboardClient({
         router.refresh()
       } catch (err: any) {
         alert(err.message || "Failed to create administrator.")
+      } finally {
+        setIsSubmittingAdmin(false)
       }
     })
   }
@@ -153,6 +172,7 @@ export default function DashboardClient({
       return
     }
 
+    setIsSubmittingPassword(true)
     startTransition(async () => {
       try {
         await changeOwnPassword(newPass)
@@ -162,6 +182,8 @@ export default function DashboardClient({
         setIsChangingPassword(false)
       } catch (err: any) {
         alert(err.message || "Failed to update password.")
+      } finally {
+        setIsSubmittingPassword(false)
       }
     })
   }
@@ -376,11 +398,15 @@ export default function DashboardClient({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
-                  className="px-5 py-2 rounded-lg font-bold font-label-sm text-xs bg-primary-fixed text-on-primary-fixed hover:bg-surface-tint transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+                  disabled={isPending || isSubmittingAdmin}
+                  className="px-5 py-2 rounded-lg font-bold font-label-sm text-xs bg-primary-fixed text-on-primary-fixed hover:bg-surface-tint transition-colors flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined text-[16px]">vpn_key</span>
-                  Create Administrator
+                  {isSubmittingAdmin ? (
+                    <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[16px]">vpn_key</span>
+                  )}
+                  <span>{isSubmittingAdmin ? "Creating..." : "Create Administrator"}</span>
                 </button>
               </div>
             </form>
@@ -452,9 +478,13 @@ export default function DashboardClient({
                               <button
                                 disabled={isPending}
                                 onClick={() => handleDeleteArticle(article.id)}
-                                className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded" title="Delete"
+                                className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded disabled:opacity-40" title="Delete"
                               >
-                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                {deletingArticleId === article.id ? (
+                                  <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                ) : (
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                )}
                               </button>
                             </div>
                           </td>
@@ -502,9 +532,13 @@ export default function DashboardClient({
                             <button
                               disabled={isPending}
                               onClick={() => handleDeleteArticle(article.id)}
-                              className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded" title="Delete"
+                              className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded disabled:opacity-40" title="Delete"
                             >
-                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                              {deletingArticleId === article.id ? (
+                                <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                              ) : (
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -598,18 +632,26 @@ export default function DashboardClient({
                                 <button
                                   disabled={isPending}
                                   onClick={() => handleToggleRole(admin.id, admin.role)}
-                                  className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer"
+                                  className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer disabled:opacity-40"
                                   title="Demote to User"
                                 >
-                                  <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
+                                  {togglingUserId === admin.id ? (
+                                    <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
+                                  )}
                                 </button>
                                 <button
                                   disabled={isPending}
                                   onClick={() => handleDeleteUser(admin.id, admin.name || admin.email)}
-                                  className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer"
+                                  className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer disabled:opacity-40"
                                   title="Delete Administrator"
                                 >
-                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                  {deletingUserId === admin.id ? (
+                                    <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                  )}
                                 </button>
                               </div>
                             )}
@@ -669,18 +711,26 @@ export default function DashboardClient({
                                 <button
                                   disabled={isPending}
                                   onClick={() => handleToggleRole(admin.id, admin.role)}
-                                  className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer"
+                                  className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer disabled:opacity-40"
                                   title="Demote to User"
                                 >
-                                  <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                  {togglingUserId === admin.id ? (
+                                    <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[16px]">arrow_downward</span>
+                                  )}
                                 </button>
                                 <button
                                   disabled={isPending}
                                   onClick={() => handleDeleteUser(admin.id, admin.name || admin.email)}
-                                  className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer"
+                                  className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer disabled:opacity-40"
                                   title="Delete Administrator"
                                 >
-                                  <span className="material-symbols-outlined text-[16px]">delete</span>
+                                  {deletingUserId === admin.id ? (
+                                    <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                                  ) : (
+                                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                                  )}
                                 </button>
                               </div>
                             )}
@@ -746,18 +796,26 @@ export default function DashboardClient({
                               <button
                                 disabled={isPending}
                                 onClick={() => handleToggleRole(userItem.id, userItem.role)}
-                                className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer"
+                                className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer disabled:opacity-40"
                                 title="Promote to Admin"
                               >
-                                <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
+                                {togglingUserId === userItem.id ? (
+                                  <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                ) : (
+                                  <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
+                                )}
                               </button>
                               <button
                                 disabled={isPending}
                                 onClick={() => handleDeleteUser(userItem.id, userItem.name || userItem.email)}
-                                className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer"
+                                className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer disabled:opacity-40"
                                 title="Delete User"
                               >
-                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                {deletingUserId === userItem.id ? (
+                                  <span className="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                ) : (
+                                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                                )}
                               </button>
                             </div>
                           </td>
@@ -803,18 +861,26 @@ export default function DashboardClient({
                             <button
                               disabled={isPending}
                               onClick={() => handleToggleRole(userItem.id, userItem.role)}
-                              className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer"
+                              className="p-1.5 text-on-surface-variant hover:text-primary-fixed transition-colors rounded cursor-pointer disabled:opacity-40"
                               title="Promote to Admin"
                             >
-                              <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                              {togglingUserId === userItem.id ? (
+                                <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                              ) : (
+                                <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                              )}
                             </button>
                             <button
                               disabled={isPending}
                               onClick={() => handleDeleteUser(userItem.id, userItem.name || userItem.email)}
-                              className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer"
+                              className="p-1.5 text-on-surface-variant hover:text-error transition-colors rounded cursor-pointer disabled:opacity-40"
                               title="Delete User"
                             >
-                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                              {deletingUserId === userItem.id ? (
+                                <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                              ) : (
+                                <span className="material-symbols-outlined text-[16px]">delete</span>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -923,11 +989,15 @@ export default function DashboardClient({
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
-                  className="px-5 py-2.5 rounded-lg font-bold font-label-sm text-xs bg-primary-fixed text-on-primary-fixed hover:bg-surface-tint transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+                  disabled={isPending || isSubmittingPassword}
+                  className="px-5 py-2.5 rounded-lg font-bold font-label-sm text-xs bg-primary-fixed text-on-primary-fixed hover:bg-surface-tint transition-colors flex items-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined text-[16px]">save</span>
-                  Update Password
+                  {isSubmittingPassword ? (
+                    <span className="material-symbols-outlined text-[16px] animate-spin">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[16px]">save</span>
+                  )}
+                  <span>{isSubmittingPassword ? "Updating..." : "Update Password"}</span>
                 </button>
               </div>
             </form>

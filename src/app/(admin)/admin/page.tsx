@@ -236,9 +236,16 @@ function AdminWriteArticleContent() {
             <button
               onClick={handlePublish}
               disabled={loading}
-              className="font-label-sm text-label-sm bg-primary-container text-on-primary-fixed px-3 py-1.5 rounded-DEFAULT font-bold hover:bg-surface-tint transition-colors scale-95 active:scale-90 disabled:opacity-50 cursor-pointer text-xs"
+              className="font-label-sm text-label-sm bg-primary-container text-on-primary-fixed px-3 py-1.5 rounded-DEFAULT font-bold hover:bg-surface-tint transition-colors scale-95 active:scale-90 disabled:opacity-50 cursor-pointer text-xs flex items-center gap-1.5"
             >
-              {loading ? "Saving..." : (editingArticleId ? "Save Changes" : "Publish")}
+              {loading ? (
+                <>
+                  <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                editingArticleId ? "Save Changes" : "Publish"
+              )}
             </button>
           </div>
         </div>
@@ -461,16 +468,59 @@ function AdminWriteArticleContent() {
   )
 }
 
+function AdminWorkspaceSkeleton() {
+  return (
+    <div className="bg-surface text-on-surface min-h-screen font-body-md flex flex-col relative pb-24">
+      {/* Top Navbar Skeleton */}
+      <nav className="fixed top-0 w-full z-50 bg-surface/80 border-b border-outline-variant/20 shadow-sm h-16 flex items-center">
+        <div className="flex justify-between items-center w-full max-w-container-max mx-auto px-gutter">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 rounded shimmer-skeleton"></div>
+            <div className="h-6 w-36 rounded shimmer-skeleton"></div>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-16 h-8 rounded shimmer-skeleton"></div>
+            <div className="w-24 h-8 rounded shimmer-skeleton"></div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Workspace Skeleton */}
+      <main className="flex-grow pt-24 px-gutter max-w-4xl mx-auto w-full space-y-8">
+        {/* Cover image area */}
+        <div className="w-full aspect-video md:aspect-[21/9] border border-outline-variant/20 rounded-xl shimmer-skeleton"></div>
+        
+        {/* Title and meta inputs */}
+        <div className="space-y-4">
+          <div className="h-12 w-full border border-outline-variant/20 rounded-lg shimmer-skeleton"></div>
+          <div className="h-10 w-full border border-outline-variant/20 rounded-lg shimmer-skeleton"></div>
+          <div className="h-10 w-full border border-outline-variant/20 rounded-lg shimmer-skeleton"></div>
+        </div>
+
+        {/* Tab switcher and toolbar */}
+        <div className="flex justify-between items-center border-b border-outline-variant/10 pb-4">
+          <div className="flex gap-2">
+            <div className="h-8 w-16 rounded shimmer-skeleton"></div>
+            <div className="h-8 w-16 rounded border border-outline-variant/20 shimmer-skeleton"></div>
+          </div>
+          <div className="h-8 w-24 rounded shimmer-skeleton"></div>
+        </div>
+
+        {/* Editor text area placeholder */}
+        <div className="h-80 w-full border border-outline-variant/20 rounded-xl p-6 space-y-4 shimmer-skeleton">
+          <div className="h-4 w-3/4 bg-white/5 rounded"></div>
+          <div className="h-4 w-5/6 bg-white/5 rounded"></div>
+          <div className="h-4 w-full bg-white/5 rounded"></div>
+          <div className="h-4 w-2/3 bg-white/5 rounded"></div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
 export default function AdminWriteArticle() {
   return (
-    <Suspense fallback={
-      <div className="bg-surface text-on-surface min-h-screen flex items-center justify-center font-body-md">
-        <div className="text-center space-y-4">
-          <span className="material-symbols-outlined text-4xl animate-spin text-primary-fixed">sync</span>
-          <p className="text-sm text-on-surface-variant font-label-sm">Loading workspace...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<AdminWorkspaceSkeleton />}>
       <AdminWriteArticleContent />
     </Suspense>
   )

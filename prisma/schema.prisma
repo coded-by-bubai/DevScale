@@ -84,6 +84,9 @@ model Comment {
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
   article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
 }
 
 model Tag {

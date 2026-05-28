@@ -72,7 +72,7 @@
   --text-code-block: 14px;
   --text-code-block--line-height: 1.7;
   --text-code-block--font-weight: 450;
-  
+
   --text-headline-lg-mobile: 28px;
   --text-headline-lg-mobile--line-height: 1.2;
   --text-headline-lg-mobile--letter-spacing: -0.02em;
@@ -116,76 +116,108 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
+
   .glass-nav {
     background: rgba(19, 19, 19, 0.8);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
+
   .neon-glow:hover {
     box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
     border-color: rgba(0, 242, 255, 0.5);
   }
+
   .card-gradient {
-    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  .font-headline-xl { font-family: var(--font-headline-xl); font-weight: var(--text-headline-xl--font-weight); }
-  .text-headline-xl { font-size: var(--text-headline-xl); line-height: var(--text-headline-xl--line-height); letter-spacing: var(--text-headline-xl--letter-spacing); }
-  
-  .font-headline-lg { font-family: var(--font-headline-lg); font-weight: var(--text-headline-lg--font-weight); }
-  .text-headline-lg { font-size: var(--text-headline-lg); line-height: var(--text-headline-lg--line-height); letter-spacing: var(--text-headline-lg--letter-spacing); }
-  
-  .font-headline-lg-mobile { font-family: var(--font-headline-lg-mobile); font-weight: var(--text-headline-lg-mobile--font-weight); }
-  .text-headline-lg-mobile { font-size: var(--text-headline-lg-mobile); line-height: var(--text-headline-lg-mobile--line-height); letter-spacing: var(--text-headline-lg-mobile--letter-spacing); }
+  .font-headline-xl {
+    font-family: var(--font-headline-xl);
+    font-weight: var(--text-headline-xl--font-weight);
+  }
 
-  .font-body-md { font-family: var(--font-body-md); font-weight: var(--text-body-md--font-weight); }
-  .text-body-md { font-size: var(--text-body-md); line-height: var(--text-body-md--line-height); letter-spacing: var(--text-body-md--letter-spacing); }
+  .text-headline-xl {
+    font-size: var(--text-headline-xl);
+    line-height: var(--text-headline-xl--line-height);
+    letter-spacing: var(--text-headline-xl--letter-spacing);
+  }
 
-  .font-label-sm { font-family: var(--font-label-sm); font-weight: var(--text-label-sm--font-weight); }
-  .text-label-sm { font-size: var(--text-label-sm); line-height: var(--text-label-sm--line-height); letter-spacing: var(--text-label-sm--letter-spacing); }
+  .font-headline-lg {
+    font-family: var(--font-headline-lg);
+    font-weight: var(--text-headline-lg--font-weight);
+  }
 
-  .font-code-block { font-family: var(--font-code-block); font-weight: var(--text-code-block--font-weight); }
-  .text-code-block { font-size: var(--text-code-block); line-height: var(--text-code-block--line-height); }
+  .text-headline-lg {
+    font-size: var(--text-headline-lg);
+    line-height: var(--text-headline-lg--line-height);
+    letter-spacing: var(--text-headline-lg--letter-spacing);
+  }
+
+  .font-headline-lg-mobile {
+    font-family: var(--font-headline-lg-mobile);
+    font-weight: var(--text-headline-lg-mobile--font-weight);
+  }
+
+  .text-headline-lg-mobile {
+    font-size: var(--text-headline-lg-mobile);
+    line-height: var(--text-headline-lg-mobile--line-height);
+    letter-spacing: var(--text-headline-lg-mobile--letter-spacing);
+  }
+
+  .font-body-md {
+    font-family: var(--font-body-md);
+    font-weight: var(--text-body-md--font-weight);
+  }
+
+  .text-body-md {
+    font-size: var(--text-body-md);
+    line-height: var(--text-body-md--line-height);
+    letter-spacing: var(--text-body-md--letter-spacing);
+  }
+
+  .font-label-sm {
+    font-family: var(--font-label-sm);
+    font-weight: var(--text-label-sm--font-weight);
+  }
+
+  .text-label-sm {
+    font-size: var(--text-label-sm);
+    line-height: var(--text-label-sm--line-height);
+    letter-spacing: var(--text-label-sm--letter-spacing);
+  }
+
+  .font-code-block {
+    font-family: var(--font-code-block);
+    font-weight: var(--text-code-block--font-weight);
+  }
+
+  .text-code-block {
+    font-size: var(--text-code-block);
+    line-height: var(--text-code-block--line-height);
+  }
 
   /* Mobile menu toggle transition */
   label[for="mobile-menu-toggle"] .close-icon {
     display: none !important;
   }
-  #mobile-menu-toggle:checked ~ div label[for="mobile-menu-toggle"] .menu-icon {
+
+  #mobile-menu-toggle:checked~div label[for="mobile-menu-toggle"] .menu-icon {
     display: none !important;
   }
-  #mobile-menu-toggle:checked ~ div label[for="mobile-menu-toggle"] .close-icon {
-    display: block !important;
-  }
 
-  /* Code blocks responsive scrolling and styles */
-  pre {
-    overflow-x: auto !important;
-    white-space: pre !important;
-    word-wrap: normal !important;
-    max-width: 100% !important;
-    padding: 1.25rem !important;
-    border-radius: 0.75rem !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    background: rgba(20, 20, 20, 0.75) !important;
-  }
-  code {
-    font-family: var(--font-code-block) !important;
-    font-size: 0.9em !important;
-  }
-  :not(pre) > code {
-    background: rgba(255, 255, 255, 0.08) !important;
-    padding: 0.2rem 0.4rem !important;
-    border-radius: 0.25rem !important;
-    color: var(--color-primary-fixed-dim) !important;
+  #mobile-menu-toggle:checked~div label[for="mobile-menu-toggle"] .close-icon {
+    display: block !important;
   }
 
   /* Share Toast animation */
@@ -194,13 +226,111 @@
       transform: translateY(1rem);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
     }
   }
+
   .animate-slide-in-up {
     animation: slide-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
 
+/* Global Code block scrollbar resets and base styles (placed outside @layer to guarantee compilation and prevent pruning) */
+pre,
+.prose pre,
+pre *,
+.prose pre * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+pre::-webkit-scrollbar,
+.prose pre::-webkit-scrollbar,
+pre *::-webkit-scrollbar,
+.prose pre *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+pre::-webkit-scrollbar-thumb,
+.prose pre::-webkit-scrollbar-thumb {
+  background: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+pre::-webkit-scrollbar-track,
+.prose pre::-webkit-scrollbar-track {
+  background: transparent !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+pre {
+  overflow-x: auto !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+  max-width: 100% !important;
+  padding: 1.25rem 0 !important;
+  border-radius: 0.75rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: rgba(20, 20, 20, 0.75) !important;
+  font-size: 0.78rem !important;
+  line-height: 1.6 !important;
+}
+
+code {
+  font-family: var(--font-code-block) !important;
+}
+
+pre>code {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  font-size: inherit !important;
+}
+
+:not(pre)>code {
+  background: rgba(255, 255, 255, 0.08) !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.25rem !important;
+  color: var(--color-primary-fixed-dim) !important;
+  font-size: 0.85em !important;
+}
+
+/* Premium Dark-Mode Shimmer Wave Effect for Skeleton Cards and Blocks */
+@keyframes shimmer-wave {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.shimmer-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.shimmer-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.02) 20%,
+    rgba(255, 255, 255, 0.06) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-wave 2s infinite ease-in-out;
+}

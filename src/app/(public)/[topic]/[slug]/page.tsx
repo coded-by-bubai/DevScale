@@ -100,13 +100,13 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   return (
-    <div className="w-full max-w-container-max mx-auto py-10 px-4 md:px-margin-desktop">
+    <div className="w-full max-w-container-max mx-auto py-10 px-0 sm:px-4 md:px-margin-desktop">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {article.coverImage && (
-        <div className="relative w-full aspect-video md:aspect-[21/9] mb-12 rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container-low shadow-lg">
+        <div className="relative w-full aspect-video md:aspect-[21/9] mb-12 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-outline-variant/30 bg-surface-container-low shadow-lg">
           <Image
             src={article.coverImage}
             alt={article.title}
