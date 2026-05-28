@@ -100,21 +100,26 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   return (
-    <div className="w-full max-w-container-max mx-auto py-10 px-0 sm:px-4 md:px-margin-desktop">
+    <div className="w-full py-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       {article.coverImage && (
-        <div className="relative w-full aspect-video md:aspect-[21/9] mb-12 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-outline-variant/30 bg-surface-container-low shadow-lg">
+        <div className="relative w-full h-64 sm:h-80 md:h-[400px] lg:h-[480px] mb-12 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-outline-variant/30 bg-surface-container-low shadow-lg">
+          {/* Elegant blurred background drop to fill empty pillarbox/letterbox areas beautifully */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center filter blur-2xl scale-105 opacity-20 select-none pointer-events-none"
+            style={{ backgroundImage: `url(${article.coverImage})` }}
+          />
+          {/* Main fully-visible crisp cover image */}
           <Image
             src={article.coverImage}
             alt={article.title}
             fill
-            className="object-cover opacity-85"
+            className="object-contain opacity-100 z-10"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent"></div>
         </div>
       )}
 

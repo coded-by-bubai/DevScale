@@ -1,6 +1,7 @@
-import { auth, signIn, signOut } from "@/auth"
+import { auth, signIn } from "@/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import LogoutButton from "@/components/LogoutButton"
 
 export default async function AdminGroupLayout({
   children,
@@ -45,19 +46,7 @@ export default async function AdminGroupLayout({
               <p className="text-xs text-on-surface-variant leading-relaxed mb-4">
                 You are currently signed in as <strong className="text-on-surface">{user.email}</strong>, which lacks administrative authority.
               </p>
-              <form
-                action={async () => {
-                  "use server"
-                  await signOut({ redirectTo: "/admin" })
-                }}
-              >
-                <button
-                  type="submit"
-                  className="w-full text-center py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs rounded-lg transition-colors font-bold font-label-sm cursor-pointer border border-red-500/30"
-                >
-                  Sign Out & Try Again
-                </button>
-              </form>
+              <LogoutButton variant="admin" />
             </div>
           ) : (
             /* Guest / Unauthenticated: Present Secure Email & Password Admin Credentials Login */

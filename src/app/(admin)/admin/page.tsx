@@ -124,7 +124,8 @@ function AdminWriteArticleContent() {
           tags: selectedTags,
         })
         alert("Changes saved successfully!")
-        router.push(`/admin?slug=${article.slug}`)
+        const primaryTag = selectedTags[0]?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'uncategorized'
+        router.push(`/${primaryTag}/${article.slug}`)
       } else {
         article = await createArticle({
           title,
@@ -142,6 +143,268 @@ function AdminWriteArticleContent() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Traverses React virtual nodes recursively to extract original raw text (vital to bypass rehypeHighlight HTML span formatting)
+  const getCodeText = (node: any): string => {
+    if (!node) return ""
+    if (typeof node === "string") return node
+    if (Array.isArray(node)) return node.map(getCodeText).join("")
+    if (node.props && node.props.children) return getCodeText(node.props.children)
+    return ""
+  }
+
+  function CopyablePre({ children, ...props }: any) {
+    const [copied, setCopied] = useState(false)
+
+    const rawText = getCodeText(children)
+    const isSystemDesign = rawText.trim().toLowerCase().startsWith('title:') && rawText.toLowerCase().includes('[step')
+    
+    if (isSystemDesign) {
+      return <>{children}</>
+    }
+
+    const handleCopy = () => {
+      const codeText = rawText
+      if (!codeText) return
+      navigator.clipboard.writeText(codeText)
+      setCopied(true)
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+    }
+
+    return (
+      <div className="relative group max-w-full my-6">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-lg border border-outline-variant/30 bg-surface/85 backdrop-blur-md text-on-surface-variant hover:text-primary-fixed hover:border-primary-fixed/40 opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md flex items-center gap-1 cursor-pointer"
+          title="Copy code"
+        >
+          {copied ? (
+            <>
+              <span className="material-symbols-outlined text-[14px] text-green-500 font-bold">check</span>
+              <span className="text-[10px] font-bold text-green-500 px-0.5 font-label-sm">Copied!</span>
+            </>
+          ) : (
+            <span className="material-symbols-outlined text-[14px]">content_copy</span>
+          )}
+        </button>
+        <pre {...props} className="!my-0">
+          {children}
+        </pre>
+      </div>
+    )
+  }
+
+  interface SystemDesignStep {
+    title: string
+    description: string
+    diagram: string
+  }
+
+  function SystemDesignSlideshow({ code }: { code: string }) {
+    const [activeStep, setActiveStep] = useState(0)
+
+    // Parse custom format steps
+    const parseSteps = (rawCode: string) => {
+      const lines = rawCode.split('\n')
+      let title = "System Architecture Workflow"
+      const parsedSteps: SystemDesignStep[] = []
+      let currentStep: Partial<SystemDesignStep> | null = null
+
+      for (let line of lines) {
+        line = line.trim()
+        if (!line) continue
+        
+        const lowerLine = line.toLowerCase()
+        if (lowerLine.startsWith('title:')) {
+          title = line.substring(6).trim()
+        } else if (lowerLine.startsWith('[step') || (line.startsWith('[') && line.endsWith(']'))) {
+          if (currentStep && currentStep.title) {
+            parsedSteps.push(currentStep as SystemDesignStep)
+          }
+          currentStep = {
+            title: line.replace(/^\[|\]$/g, '').trim(),
+            description: '',
+            diagram: ''
+          }
+        } else if (lowerLine.startsWith('description:')) {
+          if (currentStep) {
+            currentStep.description = line.substring(12).trim()
+          }
+        } else if (lowerLine.startsWith('diagram:')) {
+          if (currentStep) {
+            currentStep.diagram = line.substring(8).trim()
+          }
+        } else if (currentStep) {
+          if (currentStep.description) {
+            currentStep.description += ' ' + line
+          } else {
+            currentStep.description = line
+          }
+        }
+      }
+      if (currentStep && currentStep.title) {
+        parsedSteps.push(currentStep as SystemDesignStep)
+      }
+      return { title, steps: parsedSteps }
+    }
+
+    const { title, steps } = parseSteps(code)
+
+    if (steps.length === 0) {
+      return (
+        <div className="glass-panel border border-outline-variant/30 rounded-xl p-6 text-center text-on-surface-variant text-sm italic my-6">
+          Invalid System Design spec format. Please use [Step 1] headers, diagram and description fields.
+        </div>
+      )
+    }
+
+    const active = steps[activeStep]
+    const progressPercent = Math.min(100, Math.round(((activeStep + 1) / steps.length) * 100))
+
+    return (
+      <div className="glass-panel border border-outline-variant/30 rounded-2xl overflow-hidden card-gradient shadow-xl my-8 select-none mx-4 sm:mx-0">
+        {/* Header bar */}
+        <div className="bg-surface-container-low border-b border-outline-variant/20 px-4 sm:px-6 py-3.5 flex justify-between items-center gap-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="material-symbols-outlined text-primary-fixed text-lg flex-shrink-0 animate-pulse">schema</span>
+            <span className="font-bold text-xs sm:text-sm font-label-sm text-on-surface truncate">{title}</span>
+          </div>
+          <div className="font-label-sm text-[10px] sm:text-xs font-bold text-primary-fixed bg-primary-fixed/10 border border-primary-fixed/20 px-2.5 py-0.5 rounded flex-shrink-0">
+            Step {activeStep + 1} of {steps.length}
+          </div>
+        </div>
+
+        {/* Progress horizontal indicator */}
+        <div className="w-full h-[3px] bg-outline-variant/10 relative">
+          <div 
+            className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-fixed to-surface-tint transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+
+        {/* Diagram Canvas Area with high-tech radial glow */}
+        <div className="relative p-6 sm:p-10 min-h-[160px] sm:min-h-[220px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface-container-high/60 via-surface-container-lowest/20 to-transparent flex flex-col justify-center items-center text-center overflow-hidden border-b border-outline-variant/10">
+          <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+          
+          {/* Animated glowing backdrop overlay */}
+          <div className="absolute w-[200px] h-[200px] rounded-full bg-primary-fixed/5 filter blur-3xl scale-150 animate-pulse pointer-events-none" />
+
+          {(() => {
+            const isImageDiagram = active.diagram.trim().startsWith('/') || 
+                                  active.diagram.trim().startsWith('http://') || 
+                                  active.diagram.trim().startsWith('https://') || 
+                                  /\.(jpeg|jpg|gif|png|webp|svg|bmp)(?:\?.*)?$/i.test(active.diagram.trim())
+            if (isImageDiagram) {
+              return (
+                <div className="relative z-10 w-full max-w-[450px] aspect-video sm:aspect-auto sm:max-h-[250px] rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low/50 backdrop-blur-md shadow-lg animate-fade-in flex items-center justify-center p-2">
+                  <img 
+                    src={active.diagram.trim()} 
+                    alt={active.title} 
+                    className="max-w-full max-h-[180px] sm:max-h-[220px] object-contain rounded-lg transition-transform duration-500 hover:scale-[1.02]"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallbackNode = e.currentTarget.parentElement?.querySelector('.fallback-text');
+                      if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'block';
+                    }}
+                  />
+                  <div className="fallback-text hidden font-mono text-xs text-on-surface-variant bg-surface-container border border-outline-variant/20 px-4 py-3 rounded-lg">
+                    {active.diagram}
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <div className="relative z-10 font-mono text-sm sm:text-base md:text-lg text-on-surface bg-surface-container border border-outline-variant/20 px-5 py-4 rounded-xl shadow-lg animate-fade-in flex items-center justify-center gap-3 select-all cursor-text max-w-full overflow-x-auto whitespace-nowrap">
+                {active.diagram.split(' ').map((token, index) => {
+                  const isArrow = token.includes('➡️') || token.includes('⬅️') || token.includes('⬇️') || token.includes('⬆️') || token.includes('🤝')
+                  const isLabel = token.startsWith('[') && token.endsWith(']')
+                  return (
+                    <span 
+                      key={index}
+                      className={
+                        isArrow 
+                          ? "text-primary-fixed text-lg font-bold animate-pulse mx-1"
+                          : isLabel
+                            ? "text-surface-tint font-bold px-2 py-0.5 rounded bg-primary-fixed/15 border border-primary-fixed/25 text-xs sm:text-sm"
+                            : "text-on-surface font-semibold"
+                      }
+                    >
+                      {token}
+                    </span>
+                  )
+                })}
+              </div>
+            )
+          })()}
+        </div>
+
+        {/* Content description area */}
+        <div className="p-6 sm:p-8 space-y-4">
+          <div className="space-y-2">
+            <h5 className="font-bold text-sm sm:text-base text-on-surface flex items-center gap-2">
+              <span className="text-primary-fixed font-mono">0{activeStep + 1}.</span> {active.title}
+            </h5>
+            <p className="font-body-md text-xs sm:text-sm text-on-surface-variant leading-relaxed animate-fade-in min-h-[54px]">
+              {active.description}
+            </p>
+          </div>
+
+          {/* Controls footer */}
+          <div className="pt-4 border-t border-outline-variant/10 flex justify-between items-center gap-4 flex-wrap">
+            {/* Back button */}
+            <button
+              onClick={() => setActiveStep(prev => Math.max(0, prev - 1))}
+              disabled={activeStep === 0}
+              className="flex items-center gap-1 font-label-sm text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-3 py-1.5 border border-outline-variant/20 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-on-surface-variant transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm">chevron_left</span>
+              <span>Back</span>
+            </button>
+
+            {/* Indicators dots progress */}
+            <div className="flex gap-1.5">
+              {steps.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveStep(i)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeStep ? "bg-primary-fixed w-4" : "bg-outline-variant/50 hover:bg-outline-variant"}`}
+                  aria-label={`Go to step ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Next/Restart controls */}
+            <button
+              onClick={() => {
+                if (activeStep === steps.length - 1) {
+                  setActiveStep(0)
+                } else {
+                  setActiveStep(prev => Math.min(steps.length - 1, prev + 1))
+                }
+              }}
+              className="flex items-center gap-1 font-label-sm text-xs font-bold bg-primary-fixed text-on-primary-fixed hover:bg-primary-container rounded-lg px-3.5 py-1.5 transition-all cursor-pointer"
+            >
+              {activeStep === steps.length - 1 ? (
+                <>
+                  <span>Restart</span>
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                </>
+              ) : (
+                <>
+                  <span>Next</span>
+                  <span className="material-symbols-outlined text-sm">chevron_right</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Custom Markdown overrides to style components inside editor preview
@@ -204,6 +467,20 @@ function AdminWriteArticleContent() {
         />
       </span>
     ),
+    pre: CopyablePre,
+    code: ({ node, inline, className, children, ...props }: any) => {
+      const rawText = getCodeText(children)
+      const isSystemDesign = rawText.trim().toLowerCase().startsWith('title:') && rawText.toLowerCase().includes('[step')
+      if (isSystemDesign) {
+        const codeContent = rawText.replace(/\n$/, '')
+        return <SystemDesignSlideshow code={codeContent} />
+      }
+      return (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      )
+    }
   }
 
   return (

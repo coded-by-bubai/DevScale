@@ -2,6 +2,7 @@ import { getArticles } from "@/actions/articles"
 import Link from "next/link"
 import Image from "next/image"
 import LoadMoreArticles from "./LoadMoreArticles"
+import { getReadingTime } from "@/lib/utils"
 
 function cleanString(text: string | null) {
   if (!text) return ""
@@ -74,7 +75,7 @@ export default async function Home() {
                       </span>
                     )}
                     <span className="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[14px]">schedule</span> 12 min read
+                      <span className="material-symbols-outlined text-[14px]">schedule</span> {getReadingTime(featuredArticle.content)} min read
                     </span>
                   </div>
                   <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-4 group-hover:text-primary-fixed transition-colors">

@@ -369,5 +369,25 @@ export async function changeOwnPassword(newPassword: string) {
   }
 }
 
+export async function getBookmarkedArticles(slugs: string[]) {
+  try {
+    const articles = await db.article.findMany({
+      where: {
+        slug: { in: slugs },
+        published: true,
+      },
+      include: {
+        tags: true,
+        author: { select: { name: true, image: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    })
+    return articles
+  } catch (error) {
+    console.error("Error fetching bookmarked articles:", error)
+    return []
+  }
+}
+
 
 

@@ -8,6 +8,7 @@ import rehypeHighlight from "rehype-highlight"
 import 'highlight.js/styles/github-dark.css'
 import { postComment, updateComment, deleteComment } from "@/actions/comments"
 import { useRouter } from "next/navigation"
+import { getReadingTime } from "@/lib/utils"
 
 interface CommentWithAuthor {
   id: string
@@ -55,19 +56,27 @@ interface ArticlesContentProps {
   relatedArticles?: RelatedArticle[]
 }
 
+// Traverses React virtual nodes recursively to extract original raw text (vital to bypass rehypeHighlight HTML span formatting)
+const getCodeText = (node: any): string => {
+  if (!node) return ""
+  if (typeof node === "string") return node
+  if (Array.isArray(node)) return node.map(getCodeText).join("")
+  if (node.props && node.props.children) return getCodeText(node.props.children)
+  return ""
+}
+
 function CopyablePre({ children, ...props }: any) {
   const [copied, setCopied] = useState(false)
 
-  const getCodeText = (node: any): string => {
-    if (!node) return ""
-    if (typeof node === "string") return node
-    if (Array.isArray(node)) return node.map(getCodeText).join("")
-    if (node.props && node.props.children) return getCodeText(node.props.children)
-    return ""
+  const rawText = getCodeText(children)
+  const isSystemDesign = rawText.trim().toLowerCase().startsWith('title:') && rawText.toLowerCase().includes('[step')
+  
+  if (isSystemDesign) {
+    return <>{children}</>
   }
 
   const handleCopy = () => {
-    const codeText = getCodeText(children)
+    const codeText = rawText
     if (!codeText) return
     navigator.clipboard.writeText(codeText)
     setCopied(true)
@@ -96,6 +105,215 @@ function CopyablePre({ children, ...props }: any) {
       <pre {...props} className="!my-0">
         {children}
       </pre>
+    </div>
+  )
+}
+
+interface SystemDesignStep {
+  title: string
+  description: string
+  diagram: string
+}
+
+function SystemDesignSlideshow({ code }: { code: string }) {
+  const [activeStep, setActiveStep] = useState(0)
+
+  // Parse custom format steps
+  const parseSteps = (rawCode: string) => {
+    const lines = rawCode.split('\n')
+    let title = "System Architecture Workflow"
+    const parsedSteps: SystemDesignStep[] = []
+    let currentStep: Partial<SystemDesignStep> | null = null
+
+    for (let line of lines) {
+      line = line.trim()
+      if (!line) continue
+      
+      const lowerLine = line.toLowerCase()
+      if (lowerLine.startsWith('title:')) {
+        title = line.substring(6).trim()
+      } else if (lowerLine.startsWith('[step') || (line.startsWith('[') && line.endsWith(']'))) {
+        if (currentStep && currentStep.title) {
+          parsedSteps.push(currentStep as SystemDesignStep)
+        }
+        currentStep = {
+          title: line.replace(/^\[|\]$/g, '').trim(),
+          description: '',
+          diagram: ''
+        }
+      } else if (lowerLine.startsWith('description:')) {
+        if (currentStep) {
+          currentStep.description = line.substring(12).trim()
+        }
+      } else if (lowerLine.startsWith('diagram:')) {
+        if (currentStep) {
+          currentStep.diagram = line.substring(8).trim()
+        }
+      } else if (currentStep) {
+        if (currentStep.description) {
+          currentStep.description += ' ' + line
+        } else {
+          currentStep.description = line
+        }
+      }
+    }
+    if (currentStep && currentStep.title) {
+      parsedSteps.push(currentStep as SystemDesignStep)
+    }
+    return { title, steps: parsedSteps }
+  }
+
+  const { title, steps } = parseSteps(code)
+
+  if (steps.length === 0) {
+    return (
+      <div className="glass-panel border border-outline-variant/30 rounded-xl p-6 text-center text-on-surface-variant text-sm italic my-6">
+        Invalid System Design spec format. Please use [Step 1] headers, diagram and description fields.
+      </div>
+    )
+  }
+
+  const active = steps[activeStep]
+  const progressPercent = Math.min(100, Math.round(((activeStep + 1) / steps.length) * 100))
+
+  return (
+    <div className="glass-panel border border-outline-variant/30 rounded-2xl overflow-hidden card-gradient shadow-xl my-8 select-none mx-4 sm:mx-0">
+      {/* Header bar */}
+      <div className="bg-surface-container-low border-b border-outline-variant/20 px-4 sm:px-6 py-3.5 flex justify-between items-center gap-4">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="material-symbols-outlined text-primary-fixed text-lg flex-shrink-0 animate-pulse">schema</span>
+          <span className="font-bold text-xs sm:text-sm font-label-sm text-on-surface truncate">{title}</span>
+        </div>
+        <div className="font-label-sm text-[10px] sm:text-xs font-bold text-primary-fixed bg-primary-fixed/10 border border-primary-fixed/20 px-2.5 py-0.5 rounded flex-shrink-0">
+          Step {activeStep + 1} of {steps.length}
+        </div>
+      </div>
+
+      {/* Progress horizontal indicator */}
+      <div className="w-full h-[3px] bg-outline-variant/10 relative">
+        <div 
+          className="absolute left-0 top-0 h-full bg-gradient-to-r from-primary-fixed to-surface-tint transition-all duration-500 ease-out"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+
+      {/* Diagram Canvas Area with high-tech radial glow */}
+      <div className="relative p-6 sm:p-10 min-h-[160px] sm:min-h-[220px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-surface-container-high/60 via-surface-container-lowest/20 to-transparent flex flex-col justify-center items-center text-center overflow-hidden border-b border-outline-variant/10">
+        <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
+        
+        {/* Animated glowing backdrop overlay */}
+        <div className="absolute w-[200px] h-[200px] rounded-full bg-primary-fixed/5 filter blur-3xl scale-150 animate-pulse pointer-events-none" />
+
+        {(() => {
+          const isImageDiagram = active.diagram.trim().startsWith('/') || 
+                                active.diagram.trim().startsWith('http://') || 
+                                active.diagram.trim().startsWith('https://') || 
+                                /\.(jpeg|jpg|gif|png|webp|svg|bmp)(?:\?.*)?$/i.test(active.diagram.trim())
+          if (isImageDiagram) {
+            return (
+              <div className="relative z-10 w-full max-w-[450px] aspect-video sm:aspect-auto sm:max-h-[250px] rounded-xl overflow-hidden border border-outline-variant/20 bg-surface-container-low/50 backdrop-blur-md shadow-lg animate-fade-in flex items-center justify-center p-2">
+                <img 
+                  src={active.diagram.trim()} 
+                  alt={active.title} 
+                  className="max-w-full max-h-[180px] sm:max-h-[220px] object-contain rounded-lg transition-transform duration-500 hover:scale-[1.02]"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fallbackNode = e.currentTarget.parentElement?.querySelector('.fallback-text');
+                    if (fallbackNode) (fallbackNode as HTMLElement).style.display = 'block';
+                  }}
+                />
+                <div className="fallback-text hidden font-mono text-xs text-on-surface-variant bg-surface-container border border-outline-variant/20 px-4 py-3 rounded-lg">
+                  {active.diagram}
+                </div>
+              </div>
+            )
+          }
+
+          return (
+            <div className="relative z-10 font-mono text-sm sm:text-base md:text-lg text-on-surface bg-surface-container border border-outline-variant/20 px-5 py-4 rounded-xl shadow-lg animate-fade-in flex items-center justify-center gap-3 select-all cursor-text max-w-full overflow-x-auto whitespace-nowrap">
+              {active.diagram.split(' ').map((token, index) => {
+                const isArrow = token.includes('➡️') || token.includes('⬅️') || token.includes('⬇️') || token.includes('⬆️') || token.includes('🤝')
+                const isLabel = token.startsWith('[') && token.endsWith(']')
+                return (
+                  <span 
+                    key={index}
+                    className={
+                      isArrow 
+                        ? "text-primary-fixed text-lg font-bold animate-pulse mx-1"
+                        : isLabel
+                          ? "text-surface-tint font-bold px-2 py-0.5 rounded bg-primary-fixed/15 border border-primary-fixed/25 text-xs sm:text-sm"
+                          : "text-on-surface font-semibold"
+                    }
+                  >
+                    {token}
+                  </span>
+                )
+              })}
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* Content description area */}
+      <div className="p-6 sm:p-8 space-y-4">
+        <div className="space-y-2">
+          <h5 className="font-bold text-sm sm:text-base text-on-surface flex items-center gap-2">
+            <span className="text-primary-fixed font-mono">0{activeStep + 1}.</span> {active.title}
+          </h5>
+          <p className="font-body-md text-xs sm:text-sm text-on-surface-variant leading-relaxed animate-fade-in min-h-[54px]">
+            {active.description}
+          </p>
+        </div>
+
+        {/* Controls footer */}
+        <div className="pt-4 border-t border-outline-variant/10 flex justify-between items-center gap-4 flex-wrap">
+          {/* Back button */}
+          <button
+            onClick={() => setActiveStep(prev => Math.max(0, prev - 1))}
+            disabled={activeStep === 0}
+            className="flex items-center gap-1 font-label-sm text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-3 py-1.5 border border-outline-variant/20 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-on-surface-variant transition-all cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">chevron_left</span>
+            <span>Back</span>
+          </button>
+
+          {/* Indicators dots progress */}
+          <div className="flex gap-1.5">
+            {steps.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveStep(i)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${i === activeStep ? "bg-primary-fixed w-4" : "bg-outline-variant/50 hover:bg-outline-variant"}`}
+                aria-label={`Go to step ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Next/Restart controls */}
+          <button
+            onClick={() => {
+              if (activeStep === steps.length - 1) {
+                setActiveStep(0)
+              } else {
+                setActiveStep(prev => Math.min(steps.length - 1, prev + 1))
+              }
+            }}
+            className="flex items-center gap-1 font-label-sm text-xs font-bold bg-primary-fixed text-on-primary-fixed hover:bg-primary-container rounded-lg px-3.5 py-1.5 transition-all cursor-pointer"
+          >
+            {activeStep === steps.length - 1 ? (
+              <>
+                <span>Restart</span>
+                <span className="material-symbols-outlined text-sm">refresh</span>
+              </>
+            ) : (
+              <>
+                <span>Next</span>
+                <span className="material-symbols-outlined text-sm">chevron_right</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -138,6 +356,16 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
       })
     }
   }, [article.slug])
+
+  // Dynamic Scrollbar Controller: Enable global scrollbar strictly for article details view, and remove it on unmount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.documentElement.classList.add("show-scrollbar")
+      return () => {
+        document.documentElement.classList.remove("show-scrollbar")
+      }
+    }
+  }, [])
 
   // Handle Like Toggle
   const handleLike = () => {
@@ -274,6 +502,19 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
       </span>
     ),
     pre: CopyablePre,
+    code: ({ node, inline, className, children, ...props }: any) => {
+      const rawText = getCodeText(children)
+      const isSystemDesign = rawText.trim().toLowerCase().startsWith('title:') && rawText.toLowerCase().includes('[step')
+      if (isSystemDesign) {
+        const codeContent = rawText.replace(/\n$/, '')
+        return <SystemDesignSlideshow code={codeContent} />
+      }
+      return (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      )
+    }
   }
 
   const commentMarkdownComponents = {
@@ -436,84 +677,10 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
 
   return (
     <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
-      {/* Floating Action Bar (Left Sidebar on Desktop) */}
-      <aside className="hidden lg:block lg:col-span-1 relative">
-        <div className="sticky top-32 flex flex-col items-center gap-4 py-4 glass-panel rounded-full w-12 mx-auto border border-outline-variant/30">
-          <button
-            aria-label="Like"
-            onClick={handleLike}
-            className={`transition-colors group relative p-2 ${liked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
-          >
-            <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>
-              favorite
-            </span>
-            <span className="absolute left-14 top-1/2 -translate-y-1/2 bg-surface-container-low px-2 py-0.5 rounded text-[10px] md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity font-label-sm border border-outline-variant/30">
-              {likeCount}
-            </span>
-          </button>
-          <div className="w-6 h-px bg-outline-variant/30"></div>
-          <button
-            aria-label="Bookmark"
-            onClick={handleBookmark}
-            className={`transition-colors group relative p-2 ${bookmarked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
-          >
-            <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform" style={{ fontVariationSettings: bookmarked ? "'FILL' 1" : undefined }}>
-              bookmark
-            </span>
-          </button>
-          <div className="w-6 h-px bg-outline-variant/30"></div>
-          <button
-            aria-label="Share"
-            onClick={handleShare}
-            className="text-on-surface-variant hover:text-primary-fixed transition-colors group relative p-2"
-          >
-            <span className="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">
-              share
-            </span>
-          </button>
-        </div>
-      </aside>
 
-      {/* Mobile Floating Action Bar (Fixed at bottom center on mobile/tablet) */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-panel rounded-full px-6 py-2.5 border border-outline-variant/30 flex gap-6 items-center shadow-2xl bg-surface/90 backdrop-blur-md animate-fade-in">
-        <button
-          aria-label="Like"
-          onClick={handleLike}
-          className={`transition-colors p-2 flex items-center gap-1.5 ${liked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
-        >
-          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>
-            favorite
-          </span>
-          <span className="text-xs font-bold font-label-sm">{likeCount}</span>
-        </button>
-
-        <div className="w-px h-6 bg-outline-variant/30"></div>
-
-        <button
-          aria-label="Bookmark"
-          onClick={handleBookmark}
-          className={`transition-colors p-2 flex items-center ${bookmarked ? "text-primary-fixed" : "text-on-surface-variant hover:text-primary-fixed"}`}
-        >
-          <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: bookmarked ? "'FILL' 1" : undefined }}>
-            bookmark
-          </span>
-        </button>
-
-        <div className="w-px h-6 bg-outline-variant/30"></div>
-
-        <button
-          aria-label="Share"
-          onClick={handleShare}
-          className="transition-colors p-2 text-on-surface-variant hover:text-primary-fixed flex items-center"
-        >
-          <span className="material-symbols-outlined text-2xl">
-            share
-          </span>
-        </button>
-      </div>
 
       {/* Main Column */}
-      <div className="col-span-1 lg:col-span-8 max-w-[65ch] mx-auto w-full">
+      <div className="col-span-1 lg:col-span-10 w-full">
         {/* Header Section */}
         <header className="mb-12 px-4 sm:px-0">
           <div className="flex items-center gap-3 mb-6">
@@ -523,7 +690,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
               </Link>
             )}
             <span className="text-on-surface-variant text-sm flex items-center gap-1 font-body-md">
-              <span className="material-symbols-outlined text-[16px]">schedule</span> 12 min read
+              <span className="material-symbols-outlined text-[16px]">schedule</span> {getReadingTime(article.content)} min read
             </span>
           </div>
 
@@ -557,8 +724,8 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
           </Markdown>
         </div>
 
-        {/* Footer actions for mobile view */}
-        <div className="mt-12 pt-8 border-t border-outline-variant/20 flex lg:hidden justify-between items-center gap-6 px-4 sm:px-0">
+        {/* Actions row under the article (Universally enabled for both mobile and desktop viewports) */}
+        <div className="mt-12 pt-8 border-t border-outline-variant/20 flex justify-between items-center gap-6 px-4 sm:px-0">
           <div className="flex flex-wrap gap-2">
             {article.tags.map(tag => (
               <Link key={tag.id} href={`/topics/${tag.slug}`} className="font-label-sm text-label-sm border border-outline-variant px-3 py-1 rounded-full text-on-surface-variant hover:border-primary-fixed hover:text-primary-fixed transition-colors">
@@ -567,14 +734,34 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
             ))}
           </div>
           <div className="flex items-center gap-4 text-on-surface-variant">
-            <button onClick={handleLike} className={`p-1.5 rounded ${liked ? "text-primary-fixed" : "hover:text-primary-fixed"}`}>
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>favorite</span>
+            {/* Love button with inline sliding count */}
+            <button 
+              onClick={handleLike} 
+              className={`p-1.5 rounded-lg transition-all duration-300 flex items-center gap-1.5 cursor-pointer group ${liked ? "text-primary-fixed bg-primary-fixed/5" : "hover:text-primary-fixed hover:bg-surface-container-low"}`}
+              title="Like"
+            >
+              <span className="material-symbols-outlined transition-transform duration-300 group-hover:scale-110 active:scale-125" style={{ fontVariationSettings: liked ? "'FILL' 1" : undefined }}>favorite</span>
+              <span className="text-xs font-bold font-mono transition-all duration-300 max-w-0 opacity-0 overflow-hidden group-hover:max-w-[40px] group-hover:opacity-100 select-none">
+                {likeCount}
+              </span>
             </button>
-            <button onClick={handleBookmark} className={`p-1.5 rounded ${bookmarked ? "text-primary-fixed" : "hover:text-primary-fixed"}`}>
-              <span className="material-symbols-outlined" style={{ fontVariationSettings: bookmarked ? "'FILL' 1" : undefined }}>bookmark</span>
+
+            {/* Bookmark button */}
+            <button 
+              onClick={handleBookmark} 
+              className={`p-1.5 rounded-lg transition-all duration-300 flex items-center cursor-pointer ${bookmarked ? "text-primary-fixed bg-primary-fixed/5" : "hover:text-primary-fixed hover:bg-surface-container-low"}`}
+              title="Bookmark"
+            >
+              <span className="material-symbols-outlined transition-transform duration-300 hover:scale-110 active:scale-125" style={{ fontVariationSettings: bookmarked ? "'FILL' 1" : undefined }}>bookmark</span>
             </button>
-            <button onClick={handleShare} className="p-1.5 rounded hover:text-primary-fixed">
-              <span className="material-symbols-outlined">share</span>
+
+            {/* Share button */}
+            <button 
+              onClick={handleShare} 
+              className="p-1.5 rounded-lg transition-all duration-300 flex items-center cursor-pointer hover:text-primary-fixed hover:bg-surface-container-low"
+              title="Share"
+            >
+              <span className="material-symbols-outlined transition-transform duration-300 hover:scale-110 active:scale-125">share</span>
             </button>
           </div>
         </div>
@@ -607,55 +794,55 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
           {sessionUser ? (
             <div className="px-4 sm:px-0">
               <form onSubmit={handleCommentSubmit} className="flex gap-2 sm:gap-4 mb-10">
-              {sessionUser.image && (
-                <Image
-                  src={sessionUser.image}
-                  alt={sessionUser.name || "User"}
-                  width={40}
-                  height={40}
-                  className="rounded-full border border-outline-variant/50 object-cover w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="glass-panel rounded-lg border border-outline-variant/50 focus-within:border-primary-fixed focus-within:ring-1 focus-within:ring-primary-fixed transition-all overflow-hidden bg-surface-container-low">
-                  <textarea
-                    ref={textareaRef}
-                    className="w-full bg-transparent border-none text-on-surface placeholder-outline/50 p-2 sm:p-4 font-body-md text-body-md focus:ring-0 resize-none min-h-[100px] outline-none"
-                    placeholder="Add to the discussion... (Markdown supported)"
-                    rows={3}
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    disabled={isPending}
+                {sessionUser.image && (
+                  <Image
+                    src={sessionUser.image}
+                    alt={sessionUser.name || "User"}
+                    width={40}
+                    height={40}
+                    className="rounded-full border border-outline-variant/50 object-cover w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
                   />
-                  <div className="bg-surface border-t border-outline-variant/30 px-2 sm:px-4 py-2 flex justify-between items-center">
-                    <div className="flex gap-2 text-on-surface-variant">
-                      <button type="button" onClick={() => insertText("**", "**")} className="hover:text-primary-fixed p-1" title="Bold">
-                        <span className="material-symbols-outlined text-[18px]">format_bold</span>
-                      </button>
-                      <button type="button" onClick={() => insertText("```javascript\n", "\n```")} className="hover:text-primary-fixed p-1" title="Code">
-                        <span className="material-symbols-outlined text-[18px]">code</span>
-                      </button>
-                      <button type="button" onClick={() => insertText("[", "](url)")} className="hover:text-primary-fixed p-1" title="Link">
-                        <span className="material-symbols-outlined text-[18px]">link</span>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="glass-panel rounded-lg border border-outline-variant/50 focus-within:border-primary-fixed focus-within:ring-1 focus-within:ring-primary-fixed transition-all overflow-hidden bg-surface-container-low">
+                    <textarea
+                      ref={textareaRef}
+                      className="w-full bg-transparent border-none text-on-surface placeholder-outline/50 p-2 sm:p-4 font-body-md text-body-md focus:ring-0 resize-none min-h-[100px] outline-none"
+                      placeholder="Add to the discussion... (Markdown supported)"
+                      rows={3}
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      disabled={isPending}
+                    />
+                    <div className="bg-surface border-t border-outline-variant/30 px-2 sm:px-4 py-2 flex justify-between items-center">
+                      <div className="flex gap-2 text-on-surface-variant">
+                        <button type="button" onClick={() => insertText("**", "**")} className="hover:text-primary-fixed p-1" title="Bold">
+                          <span className="material-symbols-outlined text-[18px]">format_bold</span>
+                        </button>
+                        <button type="button" onClick={() => insertText("```javascript\n", "\n```")} className="hover:text-primary-fixed p-1" title="Code">
+                          <span className="material-symbols-outlined text-[18px]">code</span>
+                        </button>
+                        <button type="button" onClick={() => insertText("[", "](url)")} className="hover:text-primary-fixed p-1" title="Link">
+                          <span className="material-symbols-outlined text-[18px]">link</span>
+                        </button>
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isPending || !commentText.trim()}
+                        className="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold px-4 py-1.5 rounded hover:bg-primary-container disabled:opacity-50 transition-colors cursor-pointer flex items-center gap-1.5"
+                      >
+                        {isPending && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
+                        <span>{isPending ? "Posting..." : "Comment"}</span>
                       </button>
                     </div>
-                    <button
-                      type="submit"
-                      disabled={isPending || !commentText.trim()}
-                      className="bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold px-4 py-1.5 rounded hover:bg-primary-container disabled:opacity-50 transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      {isPending && <span className="material-symbols-outlined text-sm animate-spin">sync</span>}
-                      <span>{isPending ? "Posting..." : "Comment"}</span>
-                    </button>
                   </div>
+                  {errorMessage && (
+                    <p className="text-error text-xs mt-2">{errorMessage}</p>
+                  )}
                 </div>
-                {errorMessage && (
-                  <p className="text-error text-xs mt-2">{errorMessage}</p>
-                )}
-              </div>
-            </form>
-          </div>
-        ) : (
+              </form>
+            </div>
+          ) : (
             <div className="px-4 sm:px-0">
               <div className="glass-panel rounded-lg border border-outline-variant/30 p-6 text-center mb-10 flex flex-col items-center gap-3">
                 <p className="text-on-surface-variant font-body-md text-sm">
@@ -699,10 +886,10 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                           alt={comment.author.name || "User"}
                           width={40}
                           height={40}
-                          className="rounded-full border border-outline-variant/40 object-cover w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
+                          className="rounded-full border border-outline-variant/40 object-cover w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0"
                         />
                       ) : (
-                        <div className="rounded-full border border-outline-variant/40 w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 bg-surface-container flex items-center justify-center font-bold text-[10px] sm:text-sm text-on-surface-variant">
+                        <div className="rounded-full border border-outline-variant/40 w-6 h-6 sm:w-10 sm:h-10 flex-shrink-0 bg-surface-container flex items-center justify-center font-bold text-[10px] sm:text-sm text-on-surface-variant">
                           {comment.author.name?.substring(0, 2).toUpperCase() || "AN"}
                         </div>
                       )}
@@ -840,7 +1027,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                               </>
                             )}
                           </div>
-                          
+
                           {replies.length > 0 && (
                             <span className="text-xs text-on-surface-variant/70 flex items-center gap-1">
                               <span className="material-symbols-outlined text-[15px]">forum</span>
@@ -861,7 +1048,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                               alt={sessionUser.name || "User"}
                               width={32}
                               height={32}
-                              className="rounded-full border border-outline-variant/50 object-cover w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0"
+                              className="rounded-full border border-outline-variant/50 object-cover w-4 h-4 sm:w-8 sm:h-8 flex-shrink-0"
                             />
                           ) : (
                             <div className="rounded-full border border-outline-variant/50 w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 bg-surface-container flex items-center justify-center font-bold text-[8px] sm:text-xs text-on-surface-variant">
@@ -1020,7 +1207,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                                         {decodeHtmlEntities(reply.content)}
                                       </Markdown>
                                     </div>
-                                    
+
                                     {/* Actions for owner / admin */}
                                     {sessionUser && (reply.authorId === sessionUser.id || sessionUser.role === "ADMIN") && (
                                       <div className="mt-2 flex items-center gap-2 border-t border-outline-variant/10 pt-1.5">
@@ -1037,9 +1224,9 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
                                             <span>Edit</span>
                                           </button>
                                         )}
-                                        
+
                                         {reply.authorId === sessionUser.id && <span className="text-outline-variant/20 text-[10px]">|</span>}
-                                        
+
                                         <button
                                           onClick={() => handleDeleteComment(reply.id)}
                                           disabled={isDeletePending}
@@ -1075,7 +1262,7 @@ export default function ArticlesContent({ article, sessionUser, relatedArticles 
       </div>
 
       {/* Table of Contents (Right Sidebar on Desktop) */}
-      <aside className="hidden lg:block lg:col-span-3 relative">
+      <aside className="hidden lg:block lg:col-span-2 relative">
         <div className="sticky top-32 space-y-6">
           <div className="glass-panel border border-outline-variant/30 rounded-xl p-6">
             <h4 className="font-label-sm text-label-sm text-on-surface mb-4 uppercase tracking-wider">

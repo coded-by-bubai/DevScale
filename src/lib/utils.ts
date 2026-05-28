@@ -31,3 +31,9 @@ export function verifyPassword(password: string, storedHash: string): boolean {
   const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex")
   return hash === verifyHash
 }
+
+export function getReadingTime(content: string): number {
+  if (!content) return 1
+  const words = content.trim().split(/\s+/).length
+  return Math.max(1, Math.ceil(words / 200))
+}

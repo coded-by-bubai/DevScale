@@ -1,23 +1,12 @@
 export default function ArticleDetailsLoading() {
   return (
-    <div className="w-full max-w-container-max mx-auto py-10 px-0 sm:px-4 md:px-margin-desktop">
+    <div className="w-full py-10">
       {/* Cover Image Skeleton with Shimmer */}
-      <div className="relative w-full aspect-video md:aspect-[21/9] mb-12 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-outline-variant/20 shadow-lg shimmer-skeleton h-full min-h-[160px] md:min-h-[300px]"></div>
+      <div className="relative w-full h-64 sm:h-80 md:h-[400px] lg:h-[480px] mb-12 rounded-none sm:rounded-xl overflow-hidden border-y sm:border border-outline-variant/20 shadow-lg shimmer-skeleton"></div>
 
       <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
-        {/* Left Floating Action Bar Skeleton */}
-        <aside className="hidden lg:block lg:col-span-1 relative">
-          <div className="sticky top-32 flex flex-col items-center gap-6 py-6 rounded-full w-12 mx-auto border border-outline-variant/20 shimmer-skeleton">
-            <div className="w-6 h-6 rounded-full bg-white/5"></div>
-            <div className="w-6 h-px bg-outline-variant/20"></div>
-            <div className="w-6 h-6 rounded-full bg-white/5"></div>
-            <div className="w-6 h-px bg-outline-variant/20"></div>
-            <div className="w-6 h-6 rounded-full bg-white/5"></div>
-          </div>
-        </aside>
-
         {/* Main Column */}
-        <div className="col-span-1 lg:col-span-8 max-w-[65ch] mx-auto w-full">
+        <div className="col-span-1 lg:col-span-10 w-full">
           {/* Header Section */}
           <header className="mb-12 px-4 sm:px-0 space-y-6">
             <div className="flex items-center gap-3">
@@ -95,7 +84,7 @@ export default function ArticleDetailsLoading() {
         </div>
 
         {/* Right Sidebar Skeletons */}
-        <aside className="hidden lg:block lg:col-span-3 relative">
+        <aside className="hidden lg:block lg:col-span-2 relative">
           <div className="sticky top-32 space-y-6">
             {/* Table of Contents card placeholder */}
             <div className="border border-outline-variant/20 rounded-xl p-6 space-y-4 shimmer-skeleton">

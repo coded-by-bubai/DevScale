@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import LogoutButton from "@/components/LogoutButton";
 
 export default async function PublicLayout({
   children,
@@ -55,13 +56,13 @@ export default async function PublicLayout({
                       </div>
                     )}
                     {/* Subtle hover menu/dropdown or popover */}
-                    <div className="absolute right-0 top-9 bg-surface-container border border-outline-variant/30 rounded shadow-lg p-2.5 hidden group-hover:block w-36 hover:block z-50">
-                      <p className="text-[10px] text-on-surface-variant font-label-sm mb-2 truncate">{user.name || "Signed In"}</p>
-                      <form action={async () => { "use server"; await signOut() }}>
-                        <button type="submit" className="w-full text-left font-label-sm text-xs text-error hover:text-red-400 cursor-pointer flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">logout</span> Sign Out
-                        </button>
-                      </form>
+                    <div className="absolute right-0 top-9 bg-surface-container border border-outline-variant/30 rounded shadow-lg p-2.5 hidden group-hover:block w-40 hover:block z-50 space-y-1">
+                      <p className="text-[10px] text-on-surface-variant font-label-sm px-2 mb-2 truncate">{user.name || "Signed In"}</p>
+                      <Link href="/library" className="w-full text-left font-label-sm text-label-sm text-on-surface hover:text-primary-fixed hover:bg-surface-container-high transition-colors flex items-center gap-1.5 px-2 py-1.5 rounded">
+                        <span className="material-symbols-outlined text-sm">bookmark</span> My Library
+                      </Link>
+                      <div className="border-t border-outline-variant/20 my-1"></div>
+                      <LogoutButton variant="desktop" />
                     </div>
                   </div>
                 </div>
@@ -133,17 +134,17 @@ export default async function PublicLayout({
 
                 {/* Actions */}
                 <div className="flex flex-col gap-3">
+                  <Link href="/library" className="w-full justify-center font-label-sm text-label-sm text-on-surface hover:text-primary-fixed transition-colors flex items-center gap-1.5 py-2.5 border border-outline-variant/30 hover:border-primary-fixed rounded bg-surface-container-high/40">
+                    <span className="material-symbols-outlined text-sm">bookmark</span> My Library
+                  </Link>
+
                   {user.role === "ADMIN" && (
                     <Link href="/admin" className="w-full justify-center font-label-sm text-label-sm text-primary-fixed hover:text-primary-fixed-dim transition-colors flex items-center gap-1.5 py-2.5 border border-primary-fixed/30 hover:border-primary-fixed rounded bg-primary-fixed/5">
                       <span className="material-symbols-outlined text-sm">dashboard</span> Admin Dashboard
                     </Link>
                   )}
 
-                  <form action={async () => { "use server"; await signOut() }} className="w-full">
-                    <button type="submit" className="w-full justify-center font-label-sm text-label-sm text-error hover:text-red-400 transition-colors flex items-center gap-1.5 py-2.5 border border-error/30 hover:border-error rounded bg-error/5 cursor-pointer">
-                      <span className="material-symbols-outlined text-sm">logout</span> Sign Out
-                    </button>
-                  </form>
+                  <LogoutButton variant="mobile" />
 
                   <button className="w-full justify-center font-label-sm text-label-sm bg-primary-container text-on-primary-fixed py-2.5 rounded font-bold hover:bg-surface-tint transition-colors">
                     Subscribe to Journal
@@ -166,7 +167,7 @@ export default async function PublicLayout({
       </nav>
 
 
-      <main className="flex-grow pt-24 pb-section-gap px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
+      <main className="flex-grow pt-24 pb-section-gap px-1 sm:px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto w-full">
         {children}
       </main>
 
@@ -192,8 +193,8 @@ export default async function PublicLayout({
           <div className="col-span-1">
             <h5 className="font-label-sm text-label-sm text-on-surface mb-4 uppercase tracking-wider">Legal</h5>
             <ul className="space-y-3">
-              <li><a className="text-on-surface-variant hover:text-primary-fixed transition-colors font-body-md text-body-md text-sm block" href="#">Privacy</a></li>
-              <li><a className="text-on-surface-variant hover:text-primary-fixed transition-colors font-body-md text-body-md text-sm block" href="#">Terms</a></li>
+              <li><Link className="text-on-surface-variant hover:text-primary-fixed transition-colors font-body-md text-body-md text-sm block" href="/privacy-policy">Privacy</Link></li>
+              <li><Link className="text-on-surface-variant hover:text-primary-fixed transition-colors font-body-md text-body-md text-sm block" href="/terms-of-service">Terms</Link></li>
               <li><a className="text-on-surface-variant hover:text-primary-fixed transition-colors font-body-md text-body-md text-sm block" href="#">RSS Feed</a></li>
             </ul>
           </div>
